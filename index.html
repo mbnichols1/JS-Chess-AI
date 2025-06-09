@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -7,18 +7,29 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+          <div id="info">
+        <p id="status">White's move</p>
+    </div>
+    <div id="game-container">
+        <div id="chessboard"></div>
 
-    <h1>Chess vs AI</h1>
-
-    <div id="chessboard"></div>
-
-    <div id="info">
-        <button id="restart">Restart Game</button>
-        <p id="status">White to move</p>
+        <div id="captured-pieces-container">
+            <div id="black-captured" class="captured-box">
+                <h3>Captured Pieces</h3>
+                <div class="captured-pieces"></div>
+            </div>
+            <div id="white-captured" class="captured-box">
+                <h3>Captured Pieces</h3>
+                <div class="captured-pieces"></div>
+            </div>
+            <button id="restart">Restart Game</button>
+        </div>
     </div>
 
     <script src="chessAI.js" defer></script>
     <script src="chess.js" defer></script>
+    <script src="drawBoard.js" defer></script>
+
 
 </body>
 </html>

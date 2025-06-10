@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let gameOver = false;
     let whiteCapturedPieces = [];
     let blackCapturedPieces = [];
+    let legalDestinations = [];
+
 
 
     function getSquareColor(row, col) {
@@ -42,7 +44,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const color = piece === piece.toUpperCase() ? "white" : "black";
                     const type = piece.toLowerCase();
                     img.src = `images/${color}-${{
-                        p: "pawn", r: "rook", n: "knight", b: "bishop", q: "queen", k: "king"
+                        p: "pawn",
+                        r: "rook",
+                        n: "knight",
+                        b: "bishop",
+                        q: "queen",
+                        k: "king",
                     }[type]}.png`;
                     img.alt = piece;
                     square.appendChild(img);
@@ -52,11 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     square.classList.add("selected");
                 }
 
+                // Add legal move dot
+                if (legalDestinations.some(pos => pos[0] === row && pos[1] === col)) {
+                    const dot = document.createElement("div");
+                    dot.className = "move-dot";
+                    square.appendChild(dot);
+                }
+
                 square.addEventListener("click", () => onSquareClick(row, col));
                 boardElement.appendChild(square);
             }
         }
     }
+
 
     function onSquareClick(row, col) {
         if (gameOver || currentPlayer !== "white") return;
@@ -66,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selected) {
             if (tryMove(selected.row, selected.col, row, col)) {
                 selected = null;
+                legalDestinations = []; // Clear highlighted moves after move
                 drawBoard();
                 checkGameEnd("black");
 
@@ -75,17 +91,46 @@ document.addEventListener("DOMContentLoaded", () => {
                     setTimeout(makeAIMove, 300);
                 }
             } else {
-                if (piece && isWhitePiece(piece)) selected = { row, col };
-                else selected = null;
-                drawBoard();
+                // If clicked a different white piece, update selection and legal moves
+                if (piece && isWhitePiece(piece)) {
+                    selected = { row, col };
+
+                    // Get all legal moves for white and filter for selected piece
+                    const allLegalMoves = generateMoves(board, false).filter(move => {
+                        const simBoard = makeMove(board, move);
+                        return !isKingInCheck(simBoard, "white");
+                    });
+
+                    legalDestinations = allLegalMoves
+                        .filter(move => move.from[0] === row && move.from[1] === col)
+                        .map(move => move.to);
+
+                    drawBoard();
+                } else {
+                    // Clicked elsewhere — clear selection
+                    selected = null;
+                    legalDestinations = [];
+                    drawBoard();
+                }
             }
         } else {
             if (piece && isWhitePiece(piece)) {
                 selected = { row, col };
+
+                const allLegalMoves = generateMoves(board, false).filter(move => {
+                    const simBoard = makeMove(board, move);
+                    return !isKingInCheck(simBoard, "white");
+                });
+
+                legalDestinations = allLegalMoves
+                    .filter(move => move.from[0] === row && move.from[1] === col)
+                    .map(move => move.to);
+
                 drawBoard();
             }
         }
     }
+
 
     function tryMove(fromRow, fromCol, toRow, toCol) {
         const piece = board[fromRow][fromCol];
@@ -155,20 +200,23 @@ document.addEventListener("DOMContentLoaded", () => {
  
 
     function checkGameEnd(currentColor) {
-        const legalMoves = generateMoves(board, currentColor === "black").filter(move => {
+        const isBlack = currentColor === "black";
+
+        const legalMoves = generateMoves(board, isBlack).filter(move => {
             const simBoard = makeMove(board, move);
             return !isKingInCheck(simBoard, currentColor);
         });
 
         if (legalMoves.length === 0) {
-            if (isKingInCheck(board, currentIsBlack ? "black" : "white")) {
-                const winner = currentIsBlack ? "White" : "Black";
-                endGame(`${winner} Wins!`);
+            if (isKingInCheck(board, currentColor)) {
+                const winner = isBlack ? "White" : "Black";
+                endGame(`${winner} Wins by Checkmate!`);
             } else {
-                endGame("Stalemate!");
+                endGame("Draw by Stalemate!");
             }
         }
     }
+
 
     function isWhitePiece(piece) {
         return piece && piece === piece.toUpperCase();
